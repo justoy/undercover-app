@@ -1,5 +1,6 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { wordPairs, wordPairsClassic, wordPairsAdvanced, wordPairsProfessional, wordPairsEntertainment, wordPairsAbstract, wordPairsFunny, wordPairsHarryPotter } from "./data/wordPairs";
 
 /**
@@ -17,6 +18,41 @@ export default function UndercoverApp() {
   const [playerCount, setPlayerCount] = useState("");
   const [seatNumber, setSeatNumber] = useState("");
   const [wordCategory, setWordCategory] = useState("all"); // Default to all words
+  const [showQR, setShowQR] = useState(false);
+
+  // Read URL parameters on page load
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('room');
+      const count = params.get('players');
+      const category = params.get('category');
+      
+      if (code) setRoomCode(code);
+      if (count) setPlayerCount(count);
+      if (category) setWordCategory(category);
+    }
+  }, []);
+
+  // Generate shareable URL
+  const getShareableURL = () => {
+    if (!roomCode || !playerCount) return null;
+    const baseURL = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${baseURL}?room=${encodeURIComponent(roomCode)}&players=${encodeURIComponent(playerCount)}&category=${encodeURIComponent(wordCategory)}`;
+  };
+
+  // Handle share button click
+  const handleShare = () => {
+    const url = getShareableURL();
+    if (!url) {
+      alert("请先填写房间号和总人数");
+      return;
+    }
+    navigator.clipboard.writeText(url).then(() => {
+      alert("链接已复制到剪贴板");
+    });
+    setShowQR(true);
+  };
 
   // Word categories
   const categories = [
@@ -182,6 +218,48 @@ export default function UndercoverApp() {
           className="w-full py-2 rounded bg-blue-600 text-white font-medium"
         >生成我的暗号</button>
       </form>
+
+      {/* Share Section */}
+      <div className="w-full max-w-md space-y-4">
+        <button
+          onClick={handleShare}
+          disabled={!roomCode || !playerCount}
+          className={`w-full py-2 rounded font-medium ${
+            !roomCode || !playerCount
+              ? 'bg-gray-300 text-gray-500'
+              : 'bg-green-600 text-white'
+          }`}
+        >
+          分享房间
+        </button>
+
+        {showQR && getShareableURL() && (
+          <div className="flex flex-col items-center space-y-4 bg-white p-4 rounded shadow">
+            <QRCodeSVG value={getShareableURL()} size={200} />
+            <p className="text-sm text-gray-600">扫描二维码加入房间</p>
+            <div className="w-full space-y-2">
+              <p className="text-xs text-gray-500">分享链接:</p>
+              <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
+                <input
+                  type="text"
+                  value={getShareableURL()}
+                  readOnly
+                  className="flex-1 text-xs bg-transparent border-none outline-none"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(getShareableURL());
+                    alert("链接已复制到剪贴板");
+                  }}
+                  className="px-3 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  复制
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Word Display */}
       {word && (

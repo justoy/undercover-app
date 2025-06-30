@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# 谁是卧底 · 线下助手
 
-## Getting Started
+一个纯前端的“谁是卧底”游戏辅助网页应用。无需后端和网络，所有逻辑在浏览器里本地运行；玩家只需输入相同的房间暗号、总人数和各自的座位号即可公平、同步地分配角色与暗号。
 
-First, run the development server:
+---
+
+## 功能特色
+
+* **完全前端**：无服务器依赖，支持线下使用。
+* **确定性分配**：通过房间暗号与玩家人数，利用可重现的伪随机算法（xmur3 + sfc32）统一计算角色与词语。
+* **多设备同步**：每位玩家在各自设备上输入相同参数，得到一致分配结果。
+* **轻量易定制**：内置词对列表，可在 `wordPairs` 数组中自由增删或修改；支持灵活调整卧底人数规则。
+* **简洁流程**：
+
+  1. 输入房间暗号 / 房间号
+  2. 输入总人数
+  3. 输入你的座位号 / 顺序
+  4. 点击「生成我的暗号」
+  5. 点击「查看你的暗号」查看身份暗号
+  6. 被票出／淘汰后点击「查看我的身份」查看真实角色
+
+---
+
+## 本地开发
+
+### 准备工作
+
+* Node.js 环境（>=14.x）
+* pnpm、npm 或 yarn
+
+### 安装依赖
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+# 或者 npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 运行项目
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+```bash
+pnpm dev
+# 或者 npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+访问 `http://localhost:3000` 即可体验。
 
-## Learn More
+---
 
-To learn more about Next.js, take a look at the following resources:
+## 部署到 Vercel
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. 将代码推送到 GitHub/GitLab/Bitbucket。
+2. 登录 [Vercel](https://vercel.com) 并连接你的仓库。
+3. 默认检测为 Next.js（或静态站点），点击 Deploy。
+4. 完成后即可获得线上地址，玩家扫码 / 分享链接即可开始。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> **提示**：无须配置环境变量，纯前端项目可直接部署。
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 自定义配置
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+* **词对列表**：编辑 `UndercoverApp.jsx` 中的 `wordPairs` 数组。
+* **卧底人数规则**：在 `computeGame` 函数中修改 `undercoverCount` 计算逻辑。
+* **样式风格**：使用 Tailwind CSS，可根据需求调整类名或引入主题。
+
+---
+
+## 许可证
+
+MIT © 本项目由开源社区维护，欢迎贡献和反馈。

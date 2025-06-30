@@ -34,6 +34,17 @@ export default function UndercoverApp() {
     }
   }, []);
 
+  // Reset seat number when player count changes
+  useEffect(() => {
+    const currentPlayerCount = parseInt(playerCount, 10);
+    const currentSeatNumber = parseInt(seatNumber, 10);
+    
+    // Reset seat number if it's invalid for the new player count
+    if (currentSeatNumber > currentPlayerCount || (playerCount && !seatNumber)) {
+      setSeatNumber("");
+    }
+  }, [playerCount]);
+
   // Generate shareable URL
   const getShareableURL = () => {
     if (!roomCode || !playerCount) return null;
@@ -203,15 +214,25 @@ export default function UndercoverApp() {
         </div>
         <div>
           <label className="block mb-1">你的座位号（每位玩家唯一）</label>
-          <input
-            type="number"
+          <select
             value={seatNumber}
             onChange={(e) => setSeatNumber(e.target.value)}
-            min={1}
             className="w-full border rounded p-2"
-            placeholder="例如: 3"
             required
-          />
+            disabled={!playerCount || parseInt(playerCount, 10) < 1}
+          >
+            <option value="">请选择座位号</option>
+            {playerCount && parseInt(playerCount, 10) >= 1 && 
+              Array.from({ length: parseInt(playerCount, 10) }, (_, i) => i + 1).map(seat => (
+                <option key={seat} value={seat}>
+                  座位 {seat}
+                </option>
+              ))
+            }
+          </select>
+          {(!playerCount || parseInt(playerCount, 10) < 1) && (
+            <p className="text-xs text-gray-500 mt-1">请先填写总人数</p>
+          )}
         </div>
         <button
           type="submit"
@@ -293,10 +314,6 @@ export default function UndercoverApp() {
           )}
         </div>
       )}
-
-      <footer className="text-xs text-gray-500 mt-auto">
-        纯前端实现 · 所有计算在本地浏览器，无需联网
-      </footer>
     </div>
   );
 }

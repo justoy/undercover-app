@@ -237,7 +237,7 @@ export default function UndercoverApp() {
         <button
           type="submit"
           className="w-full py-2 rounded bg-blue-600 text-white font-medium"
-        >生成我的暗号</button>
+        >查看我的暗号</button>
       </form>
 
       {/* Share Section */}

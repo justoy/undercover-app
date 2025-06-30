@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { wordPairs } from "./data/wordPairs";
+import { wordPairs, wordPairsClassic, wordPairsAdvanced, wordPairsProfessional, wordPairsEntertainment, wordPairsAbstract, wordPairsFunny, wordPairsHarryPotter } from "./data/wordPairs";
 
 /**
  * A completely client‑side "Who is the Undercover" helper.
@@ -8,6 +8,7 @@ import { wordPairs } from "./data/wordPairs";
  *   – roomCode (shared passphrase)
  *   – playerCount (shared total number of players)
  *   – seatNumber  (unique per player)
+ *   - wordCategory (shared word category)
  * No network requests or back‑end required.
  */
 export default function UndercoverApp() {
@@ -15,6 +16,41 @@ export default function UndercoverApp() {
   const [roomCode, setRoomCode] = useState("");
   const [playerCount, setPlayerCount] = useState("");
   const [seatNumber, setSeatNumber] = useState("");
+  const [wordCategory, setWordCategory] = useState("all"); // Default to all words
+
+  // Word categories
+  const categories = [
+    { id: "all", name: "全部词库 (All Words)" },
+    { id: "classic", name: "经典入门 (Classic & Easy)" },
+    { id: "advanced", name: "生活进阶 (Life & Advanced)" },
+    { id: "professional", name: "职场/专业 (Professional)" },
+    { id: "entertainment", name: "文化娱乐 (Culture & Entertainment)" },
+    { id: "abstract", name: "烧脑/抽象 (Brain-burning & Abstract)" },
+    { id: "funny", name: "趣味对比 (Funny Comparisons)" },
+    { id: "harryPotter", name: "哈利·波特主题 (Harry Potter Theme)" }
+  ];
+
+  // Get word pairs based on category
+  function getWordPairsByCategory(category) {
+    switch (category) {
+      case "classic":
+        return wordPairsClassic;
+      case "advanced":
+        return wordPairsAdvanced;
+      case "professional":
+        return wordPairsProfessional;
+      case "entertainment":
+        return wordPairsEntertainment;
+      case "abstract":
+        return wordPairsAbstract;
+      case "funny":
+        return wordPairsFunny;
+      case "harryPotter":
+        return wordPairsHarryPotter;
+      default:
+        return wordPairs;
+    }
+  }
 
   // Computed game data
   const [role, setRole] = useState(null); // "卧底" | "平民"
@@ -52,10 +88,11 @@ export default function UndercoverApp() {
 
   // Compute game data deterministically
   function computeGame(roomCode, playerCount) {
-    const seedFn = xmur3(roomCode + "|" + playerCount);
+    const seedFn = xmur3(roomCode + "|" + playerCount + "|" + wordCategory);
     const rng = sfc32(seedFn(), seedFn(), seedFn(), seedFn());
 
-    const pair = wordPairs[Math.floor(rng() * wordPairs.length)];
+    const selectedWordPairs = getWordPairsByCategory(wordCategory);
+    const pair = selectedWordPairs[Math.floor(rng() * selectedWordPairs.length)];
     const seats = Array.from({ length: playerCount }, (_, i) => i + 1);
     // Fisher–Yates shuffle
     for (let i = seats.length - 1; i > 0; i--) {
@@ -101,6 +138,20 @@ export default function UndercoverApp() {
             placeholder="例如: abc123"
             required
           />
+        </div>
+        <div>
+          <label className="block mb-1">词库选择</label>
+          <select
+            value={wordCategory}
+            onChange={(e) => setWordCategory(e.target.value)}
+            className="w-full border rounded p-2"
+          >
+            {categories.map(category => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label className="block mb-1">总人数</label>

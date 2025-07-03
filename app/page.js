@@ -10,6 +10,7 @@ import { wordPairs, wordPairsClassic, wordPairsAdvanced, wordPairsProfessional, 
  *   – playerCount (shared total number of players)
  *   – seatNumber  (unique per player)
  *   - wordCategory (shared word category)
+ *   - gameNumber (shared game round number)
  * No network requests or back‑end required.
  */
 export default function UndercoverApp() {
@@ -18,6 +19,7 @@ export default function UndercoverApp() {
   const [playerCount, setPlayerCount] = useState("");
   const [seatNumber, setSeatNumber] = useState("");
   const [wordCategory, setWordCategory] = useState("all"); // Default to all words
+  const [gameNumber, setGameNumber] = useState(1); // Game round number
   const [showQR, setShowQR] = useState(false);
 
   // Read URL parameters on page load
@@ -27,10 +29,12 @@ export default function UndercoverApp() {
       const code = params.get('room');
       const count = params.get('players');
       const category = params.get('category');
+      const game = params.get('game');
       
       if (code) setRoomCode(code);
       if (count) setPlayerCount(count);
       if (category) setWordCategory(category);
+      if (game) setGameNumber(parseInt(game, 10) || 1);
     }
   }, []);
 
@@ -49,7 +53,7 @@ export default function UndercoverApp() {
   const getShareableURL = () => {
     if (!roomCode || !playerCount) return null;
     const baseURL = typeof window !== 'undefined' ? window.location.origin : '';
-    return `${baseURL}?room=${encodeURIComponent(roomCode)}&players=${encodeURIComponent(playerCount)}&category=${encodeURIComponent(wordCategory)}`;
+    return `${baseURL}?room=${encodeURIComponent(roomCode)}&players=${encodeURIComponent(playerCount)}&category=${encodeURIComponent(wordCategory)}&game=${encodeURIComponent(gameNumber)}`;
   };
 
   // Handle share button click
@@ -134,8 +138,8 @@ export default function UndercoverApp() {
   }
 
   // Compute game data deterministically
-  function computeGame(roomCode, playerCount) {
-    const seedFn = xmur3(roomCode + "|" + playerCount + "|" + wordCategory);
+  function computeGame(roomCode, playerCount, gameNumber) {
+    const seedFn = xmur3(roomCode + "|" + playerCount + "|" + wordCategory + "|" + gameNumber);
     const rng = sfc32(seedFn(), seedFn(), seedFn(), seedFn());
 
     const selectedWordPairs = getWordPairsByCategory(wordCategory);
@@ -160,7 +164,27 @@ export default function UndercoverApp() {
       alert("请填写正确的房间号、人数和座位号");
       return;
     }
-    const { pair, undercoverSeats } = computeGame(roomCode, n);
+    const { pair, undercoverSeats } = computeGame(roomCode, n, gameNumber);
+    const isUndercover = undercoverSeats.has(s);
+    setRole(isUndercover ? "卧底" : "平民");
+    setWord(isUndercover ? pair[0] : pair[1]);
+    setShowWord(false);
+    setEliminated(false);
+    setShowIdentity(false);
+  }
+
+  // Handle new game button click
+  function handleNewGame() {
+    const newGameNumber = gameNumber + 1;
+    setGameNumber(newGameNumber);
+    
+    const n = parseInt(playerCount, 10);
+    const s = parseInt(seatNumber, 10);
+    if (!roomCode || !n || !s || s < 1 || s > n) {
+      alert("请填写正确的房间号、人数和座位号");
+      return;
+    }
+    const { pair, undercoverSeats } = computeGame(roomCode, n, newGameNumber);
     const isUndercover = undercoverSeats.has(s);
     setRole(isUndercover ? "卧底" : "平民");
     setWord(isUndercover ? pair[0] : pair[1]);
@@ -172,6 +196,11 @@ export default function UndercoverApp() {
   return (
     <div className="min-h-screen flex flex-col items-center p-4 space-y-6 bg-gray-50">
       <h1 className="text-3xl font-bold">谁是卧底 · 线下助手</h1>
+
+      {/* Game Number Display */}
+      <div className="text-lg font-medium text-gray-700">
+        第 {gameNumber} 局
+      </div>
 
       {/* Input Section */}
       <form onSubmit={handleGenerate} className="w-full max-w-md space-y-4">
@@ -298,19 +327,25 @@ export default function UndercoverApp() {
 
       {/* Elimination & Identity */}
       {role && (
-        <div className="w-full max-w-md bg-white shadow rounded p-6 text-center">
+        <div className="w-full max-w-md bg-white shadow rounded p-6 text-center space-y-4">
           {!eliminated ? (
             <button
               onClick={() => setEliminated(true)}
               className="w-full py-2 rounded border border-gray-400"
-            >我被票出／淘汰</button>
+            >我被淘汰/游戏已结束</button>
           ) : !showIdentity ? (
             <button
               onClick={() => setShowIdentity(true)}
               className="w-full py-2 rounded bg-purple-600 text-white"
             >查看我的身份</button>
           ) : (
-            <p className="text-xl font-bold">你的身份：{role}</p>
+            <div className="space-y-4">
+              <p className="text-xl font-bold">你的身份：{role}</p>
+              <button
+                onClick={handleNewGame}
+                className="w-full py-2 rounded bg-orange-600 text-white font-medium"
+              >开始新的一局（第 {gameNumber + 1} 局）</button>
+            </div>
           )}
         </div>
       )}
